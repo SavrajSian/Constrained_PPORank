@@ -1,0 +1,1 @@
+	gain:cnaACC1 (TERT)	gain:cnaACC2 (IL7R)	loss:cnaACC3	loss:cnaACC4 (CDKN2A)	loss:cnaACC5 (PAX5)	loss:cnaACC6	loss:cnaACC7 (ZNRF3)	loss:cnaACC8	loss:cnaACC9	loss:cnaACC10	loss:cnaACC11	loss:cnaACC12	loss:cnaACC13909744	0	0	0	0	0	0	0	0	0	0	0	0	0

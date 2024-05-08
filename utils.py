@@ -11,10 +11,15 @@ import math
 from tqdm import tqdm, trange
 import matplotlib.pyplot as plt
 from _testcapi import raise_exception
+from arguments import get_args
 
 
 def check_gpu():
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    args = get_args()
+    if args.use_mps:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    else:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Using device:', device)
 
     # Additional Info when using cuda

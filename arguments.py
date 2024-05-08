@@ -80,7 +80,7 @@ def get_args():
     parser.add_argument(
         '--epochs',
         type=int,
-        default=1400,
+        default=10,
         help='number of epochs for training (default:1000)')
     parser.add_argument(
         '--batch_size',
@@ -291,7 +291,7 @@ def get_args():
     parser.add_argument(
         '--analysis',
         type=str,
-        default="FULL",
+        default="FULL", # FULL, KEEPK, noise, sparse
         help='analysis can be FULL or KEEPK or noise or sparse')
     parser.add_argument(
         '--keepk',
@@ -360,12 +360,26 @@ def get_args():
         type=float,
         default=0.0,
         help='noise mean if using noise data')
+    parser.add_argument(
+        '--constrained',
+        default=True,
+        help='whether to use constrained optimization')
+    parser.add_argument(
+        '--use_mps',
+        default=False,
+        help='whether to use mps (Mac)')
 
     args = parser.parse_args()
 
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.use_mps:
+        args.device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    else:
+        args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    args.shared_params = False
 
     #args.cuda = not args.no_cuda and torch.cuda.is_available()
+    args.cuda = torch.cuda.is_available()
 
     assert args.algo in ['pg', 'ppo', 'dnn']
 

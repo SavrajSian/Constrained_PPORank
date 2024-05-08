@@ -80,13 +80,35 @@ def initialize_logger_name(args):
 
     return NAME
 
+class CustomFormatter(logging.Formatter):
+    """Logging Formatter to add colors depending on the logging level"""
+    grey = "\x1b[38;21m"
+    blue = "\x1b[38;5;45m"
+    yellow = "\x1b[33;21m"
+    red = "\x1b[31;21m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s - %(name)s - [%(levelname)s] - %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: blue + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt, "%Y-%m-%d %H:%M:%S")
+        return formatter.format(record)
 
 def set_logging(NAME):
     PROCESS_START_TIME = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     formatter = logging.Formatter(
         '%(asctime)s %(name)12s [%(levelname)s]\t%(message)s')
     ch = logging.StreamHandler()  # TqdmLoggingHandler()  #
-    ch.setFormatter(formatter)
+    ch.setFormatter(CustomFormatter())
     if not os.path.exists(os.path.join('./logs', "{}".format(NAME))):
         os.makedirs(os.path.join('./logs', "{}".format(NAME)))
     fh = logging.FileHandler(os.path.join(

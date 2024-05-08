@@ -87,7 +87,7 @@ def read_data(args):
     if args.analysis == "FULL" and args.prop < 1.0:
         Xtrain, Xtest, Ytrain, Ytest = utils.read_PROP(args.Data, args.prop, "CV", int(args.fold[-1]))
 
-    elif args.analysis == "FULL":
+    elif args.analysis == "FULL":  #or args.analysis == "KEEPK":
         Xtrain, Xtest, Ytrain, Ytest = utils.read_FULL(args.Data, "CV", int(args.fold[-1]))
 
     if args.ess_genes_fn:
@@ -105,26 +105,28 @@ def prepare_loader(data_dir, args, f=None, pretrain=False):
     f = f if f else args.f
     Xtrain, Xtest, Ytrain, Ytest = read_data(args)
 
+    original_drug_ids = Ytrain.columns.tolist()
+
     Xtrain, Xtest, Ytrain, Ytest = np.array(Xtrain), np.array(Xtest), np.array(Ytrain), np.array(Ytest)
 
     # Xtrain and Ytrain are all
     WP, drug_embs = load_PQ_WP_embs(data_dir, f, args.pretrain)  # only drugs_emb in tensor
 
     ###
-    xscaler = StandardScaler()
-    Xtrain = xscaler.fit_transform(Xtrain)
-    Xtest = xscaler.transform(Xtest)
+    xscaler = StandardScaler() #Standardize features by removing the mean and scaling to unit variance
+    Xtrain = xscaler.fit_transform(Xtrain) #Learn the parameters and apply the transformation to train data
+    Xtest = xscaler.transform(Xtest) #Apply the learned transformation (from train data) to test data
     ###
     # WP [P,f] f is project dim
-    N = Xtrain.shape[0]
-    M = Ytrain.shape[1]
-    P = Xtrain.shape[1]
+    N = Xtrain.shape[0] #N cell lines
+    M = Ytrain.shape[1] #M drugs
+    P = Xtrain.shape[1] #P features
 
     cell_fts_dim = Xtrain.shape[1]  # 985 or 1610
     #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     dtype = torch.DoubleTensor
-    train_drug_inds = np.arange(M).reshape(1, M).repeat(N, axis=0).reshape(N, M, 1)
+    train_drug_inds = np.arange(M).reshape(1, M).repeat(N, axis=0).reshape(N, M, 1) # create a 3D array of shape (N,M,1)
     train_cell_fts = np.repeat(Xtrain[:, np.newaxis, :], M, axis=1)  # (788,223,985)
     train_input = np.concatenate((train_cell_fts, train_drug_inds), axis=2)  # train_input[i] shape is (265,1611)
     train_input = torch.from_numpy(train_input)  # (N,M,P+1)
@@ -149,7 +151,7 @@ def prepare_loader(data_dir, args, f=None, pretrain=False):
     # test_loader=DataLoader(test_dataset,batch_size=args.batch_size,shuffle=False)
 
     return N, M, P, WP, drug_embs, train_dataset, test_dataset, train_input, test_input, Ytest, \
-        cell_mean_score, drug_mean_score, overall_mean_score
+        cell_mean_score, drug_mean_score, overall_mean_score, original_drug_ids
 
 
 def prepare_loader_simu(data_dir, args, f=None):
@@ -166,6 +168,9 @@ def prepare_loader_simu(data_dir, args, f=None):
         Ytest_fn = 'Ytest_' + args.analysis+'_df.csv'
         Ynoise_train_fn = Ytrain_fn
         Ynoise_test_fn = Ytest_fn
+
+    Ytrain = (pd.read_csv(os.path.join(data_dir, Ytrain_fn), index_col=0))
+    original_drug_ids = Ytrain.columns.tolist()
 
     Ytrain = np.asarray(pd.read_csv(os.path.join(data_dir, Ytrain_fn), index_col=0))
     Ytest = np.asarray(pd.read_csv(os.path.join(data_dir, Ytest_fn), index_col=0))
@@ -241,7 +246,7 @@ def prepare_loader_simu(data_dir, args, f=None):
     test_dataset = TensorDataset(test_input, test_true_scores)
     # test_loader=DataLoader(test_dataset,batch_size=args.batch_size,shuffle=False)
 
-    return N, M, P, WP, drug_embs, train_dataset, test_dataset, train_input, test_input, Ytest, Ynoise_test
+    return N, M, P, WP, drug_embs, train_dataset, test_dataset, train_input, test_input, Ytest, Ynoise_test, original_drug_ids
 
 
 def gene_drug_emb(M_drug, clusters, a=0.5, b=1.0):

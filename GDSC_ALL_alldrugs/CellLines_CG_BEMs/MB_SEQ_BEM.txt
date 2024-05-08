@@ -1,0 +1,3 @@
+CG	cancer_type_specific	906833	683667	909248
+TP53	FALSE	1	1	0
+PTEN	FALSE	0	0	1

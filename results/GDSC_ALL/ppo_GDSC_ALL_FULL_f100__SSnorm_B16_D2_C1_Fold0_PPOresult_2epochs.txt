@@ -1,0 +1,3 @@
+epoch,train_ndcg,train_rewards,test_ndcg,test_rewards
+0 0.6203 71596.476562,0.6095,76396.492188
+1 0.6130 71509.882812,0.6073,75886.398438

@@ -1,0 +1,39 @@
+drug_id,Name,Synonyms,PubCHEM,combined,BADD_ID,Death,Lifethreatening,Mild,Moderate,Severe
+1032,Afatinib,"BIBW2992, Tovok, Gilotrif",10184653,"Afatinib, BIBW2992, Tovok, Gilotrif",BADD_D00047,47.0,23.0,65.0,86.0,74.0
+281,Alectinib,"CH5424802, CH 542802, Alecensa",49806720,"Alectinib, CH5424802, CH 542802, Alecensa",BADD_D02480,18.0,7.0,20.0,37.0,28.0
+1021,Axitinib,"AG-13736, Inlyta",6450551,"Axitinib, AG-13736, Inlyta",BADD_D00193,32.0,12.0,92.0,101.0,84.0
+186,Bexarotene,"LG-100069, Targretin, Targret, Targrexin, Targretyn, Bexarotenum",82146,"Bexarotene, LG-100069, Targretin, Targret, Targrexin, Targretyn, Bexarotenum",BADD_D00269,6.0,1.0,17.0,13.0,17.0
+150,Bicalutamide,"ICI-176334, Casodex, Cosudex, ICI 176334",2375,"Bicalutamide, ICI-176334, Casodex, Cosudex, ICI 176334",BADD_D00271,44.0,13.0,113.0,81.0,78.0
+190,Bleomycin,,several,"Bleomycin, ",BADD_D00280,18.0,6.0,38.0,7.0,9.0
+1019,Bosutinib,"SKI-606, Bosulif",5328940,"Bosutinib, SKI-606, Bosulif",BADD_D00286,18.0,5.0,85.0,71.0,59.0
+249,Cabozantinib,"BMS-907351, XL-184, Cometriq",25102847,"Cabozantinib, BMS-907351, XL-184, Cometriq",BADD_D00330,20.0,13.0,65.0,113.0,108.0
+1005,Cisplatin,"cis-Diammineplatinum(II) dichloride, Platinol, CIS-DDP",84691,"Cisplatin, cis-Diammineplatinum(II) dichloride, Platinol, CIS-DDP",BADD_D00474,68.0,23.0,285.0,130.0,109.0
+37,Crizotinib,"Xalkori, PF2341066, PF-2341066, PF 2341066",11626560,"Crizotinib, Xalkori, PF2341066, PF-2341066, PF 2341066",BADD_D00535,48.0,18.0,82.0,99.0,80.0
+1006,Cytarabine,"Ara-Cytidine, Arabinosyl Cytosine, U-19920",6253,"Cytarabine, Ara-Cytidine, Arabinosyl Cytosine, U-19920",BADD_D00560,81.0,21.0,181.0,62.0,49.0
+1373,Dabrafenib,"GSK2118436, Tafinlar",44462760,"Dabrafenib, GSK2118436, Tafinlar",BADD_D00566,18.0,5.0,77.0,46.0,45.0
+51,Dasatinib,"BMS-354825-03, BMS-354825, Sprycel",3062316,"Dasatinib, BMS-354825-03, BMS-354825, Sprycel",BADD_D00589,38.0,15.0,154.0,115.0,126.0
+1,Erlotinib,"Tarceva, RG-1415, CP-358774, OSI-774, Ro-508231, R-1415",176870,"Erlotinib, Tarceva, RG-1415, CP-358774, OSI-774, Ro-508231, R-1415",BADD_D00800,38.0,5.0,30.0,36.0,47.0
+134,Etoposide,"Etopophos, Vepesid, Eposin, VP-16",36462,"Etoposide, Etopophos, Vepesid, Eposin, VP-16",BADD_D00854,41.0,10.0,76.0,35.0,15.0
+1010,Gefitinib,"ZD-1839, Iressa",123631,"Gefitinib, ZD-1839, Iressa",BADD_D01008,33.0,12.0,44.0,40.0,35.0
+238,Idelalisib,"CAL-101, Zydelig",11625818,"Idelalisib, CAL-101, Zydelig",BADD_D01130,33.0,20.0,53.0,47.0,38.0
+34,Imatinib,"Gleevec, STI-571",5291,"Imatinib, Gleevec, STI-571",BADD_D01136,129.0,37.0,243.0,166.0,195.0
+119,Lapatinib,"Tykerb, Tyverb",208908,"Lapatinib, Tykerb, Tyverb",BADD_D01248,18.0,1.0,41.0,21.0,31.0
+1020,Lenalidomide,"CDC-501, CC-5013, Revlimid",216326,"Lenalidomide, CDC-501, CC-5013, Revlimid",BADD_D01253,94.0,37.0,163.0,306.0,303.0
+1008,Methotrexate,"Abitrexate, Amethopterin, Rheumatrex, Trexall, Folex",126941,"Methotrexate, Abitrexate, Amethopterin, Rheumatrex, Trexall, Folex",BADD_D01418,34.0,20.0,136.0,111.0,143.0
+1013,Nilotinib,"Tasigna, AMN 107",644241,"Nilotinib, Tasigna, AMN 107",BADD_D01567,87.0,38.0,216.0,295.0,262.0
+1017,Olaparib,"AZD2281, KU0059436,  Lynparza",23725625,"Olaparib, AZD2281, KU0059436,  Lynparza",BADD_D01601,29.0,8.0,43.0,43.0,33.0
+1054,Palbociclib,"PD0332991, PD-0332991, PF-00080665-73",5330286,"Palbociclib, PD0332991, PD-0332991, PF-00080665-73",BADD_D01654,19.0,4.0,169.0,88.0,209.0
+199,Pazopanib,Votrient,10113978,"Pazopanib, Votrient",BADD_D01687,70.0,36.0,120.0,149.0,120.0
+155,Ponatinib,"AP24534, AP-24534, KIN001-192, Iclusig",24826799,"Ponatinib, AP24534, AP-24534, KIN001-192, Iclusig",BADD_D01799,48.0,4.0,97.0,44.0,79.0
+71,Pyrimethamine,"Daraprim, Chloridine",4993,"Pyrimethamine, Daraprim, Chloridine",BADD_D01886,10.0,1.0,15.0,13.0,6.0
+1175,Rucaparib,"PF-01367338, AG-014699, AG-14447, AG-14699",9931953,"Rucaparib, PF-01367338, AG-014699, AG-14447, AG-14699",BADD_D02510,9.0,5.0,38.0,123.0,177.0
+206,Ruxolitinib,"INCB-18424, Ruxolitinib Phosphate, Jakafi",25126798,"Ruxolitinib, INCB-18424, Ruxolitinib Phosphate, Jakafi",BADD_D01978,47.0,20.0,103.0,82.0,124.0
+30,Sorafenib,"Nexavar, 284461-73-0, BAY 43-9006",216239,"Sorafenib, Nexavar, 284461-73-0, BAY 43-9006",BADD_D02058,78.0,32.0,162.0,230.0,200.0
+5,Sunitinib,"Sutent, Sunitinib Malate, SU-11248",5329102,"Sunitinib, Sutent, Sunitinib Malate, SU-11248",BADD_D02100,65.0,26.0,187.0,273.0,179.0
+1259,Talazoparib,"BMN-673, BMN 973",44819241,"Talazoparib, BMN-673, BMN 973",BADD_D02485,2.0,0.0,6.0,1.0,5.0
+1199,Tamoxifen,"Nolvadex, Soltamox, Zynoplex, ICI-46474, Kessar",2733526,"Tamoxifen, Nolvadex, Soltamox, Zynoplex, ICI-46474, Kessar",BADD_D02111,2.0,0.0,19.0,6.0,14.0
+1375,Temozolomide,"Temodar, Temodal, M-39831, SCH 52365",5394,"Temozolomide, Temodar, Temodal, M-39831, SCH 52365",BADD_D02150,45.0,11.0,109.0,53.0,40.0
+1372,Trametinib,"GSK1120212, Mekinist",11707110,"Trametinib, GSK1120212, Mekinist",BADD_D02257,32.0,7.0,57.0,52.0,42.0
+1009,Tretinoin,"ATRA, Vesanoid, Renova, Atralin, Tretin-X, Avita",444795,"Tretinoin, ATRA, Vesanoid, Renova, Atralin, Tretin-X, Avita",BADD_D02270,11.0,3.0,42.0,13.0,20.0
+1033,Vismodegib,"GDC0449, Erivedge",24776445,"Vismodegib, GDC0449, Erivedge",BADD_D02365,18.0,11.0,60.0,56.0,55.0
+1012,Vorinostat,"Zolinza, SAHA, suberanilohydroxamic acid, suberoylanilide hydroxamic acid, MK-0683",5311,"Vorinostat, Zolinza, SAHA, suberanilohydroxamic acid, suberoylanilide hydroxamic acid, MK-0683",BADD_D02370,8.0,2.0,18.0,8.0,16.0

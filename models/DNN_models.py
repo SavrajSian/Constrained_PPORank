@@ -363,7 +363,6 @@ class DeepCrossModel(nn.Module):
         self.nlayers_deep = nlayers_deep
 
         self.drug_embedding = nn.Embedding(M, drug_dim, max_norm=1).double()
-        #self.drug_embedding = nn.Embedding(M, drug_dim).double()
         if drug_embedding:
             self.drug_embedding.weight.data.copy_(drug_embedding)
             self.drug_embedding.weight.requires_grad = train_drug

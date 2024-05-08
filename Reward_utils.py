@@ -51,7 +51,7 @@ def dcg_general(true_scores, pre_scores, k, full_rank=False):
         s_u = true_scores[cell][test_drug_bool]
         r_u = pre_scores[cell][test_drug_bool]
 
-        pre_rank = np.argsort(r_u)[::-1]
+        pre_rank = np.argsort(r_u)[::-1] #indices that sort r_u in descending order
         # if k > pre_rank.shape[0]:
         #     k = pre_rank.shape[0]
         k_new = min(k, s_u.shape[0])
@@ -59,6 +59,14 @@ def dcg_general(true_scores, pre_scores, k, full_rank=False):
             dcg[cell] = np.sum((2**s_u[pre_rank[:k_new]]-1)/np.log2(range(2, 2+k_new)))
         else:
             dcg[cell] = np.sum((2**s_u[pre_rank]-1)/np.log2(range(2, 2+pre_rank.shape[0])))
+        '''
+        if np.isclose(dcg, 0).sum() > 0 and np.array_equal(true_scores, pre_scores):
+            print('Zero encountered in dcg')
+            print('num zeros', dcg.size - np.count_nonzero(dcg))
+            print(np.sum((2**s_u[pre_rank]-1)/np.log2(range(2, 2+pre_rank.shape[0]))))
+            print(k_new)
+            print('')
+        '''
     return dcg
 
 
@@ -66,6 +74,32 @@ def ndcg(true_scores, pre_scores, k, full_rank=False):
     dcg = dcg_general(true_scores, pre_scores, k, full_rank=full_rank)
     idcg = dcg_general(true_scores, true_scores, k, full_rank=full_rank)
     ndcg_val = dcg/idcg
+
+    # Exploring RuntimeError for division, IDCG is sometimes 0 with the severity only drugs. Func handles with setting to nan if idcg == 0 and also asserts ndcg >= 0
+    '''
+    print('problem rows', np.where(idcg == 0)[0])
+
+    idcg_individual = np.zeros(38)
+    for i in range(38):
+        # Isolating each drug as if it were the only one in the dataset
+        idcg_individual[i] = np.nanmean(dcg_general(true_scores[:, [i]], true_scores[:, [i]], k=38, full_rank=True))
+
+    print("IDCG for individual drugs:", idcg_individual)
+    print('true_scores shape', true_scores.shape) # (769,38) for severity only drugs, (769,265) for all drugs
+    print('pre_scores shape', pre_scores.shape) # (769,38) for severity only drugs, (769,265) for all drugs
+    print('dcg shape', dcg.shape) # 769 for all drugs and severity only drugs
+    print('idcg shape', idcg.shape) #769 for all drugs and severity only drugs
+
+    if np.isnan(ndcg_val).any():
+        print('nan in ndcg')
+        if np.isinf(dcg).any() or np.isinf(idcg).any():
+            print("Infinity encountered")
+        if np.isclose(idcg, 0).any():
+            print("Zero encountered in idcg")
+            print('num zeros', idcg.size - np.count_nonzero(idcg))
+            print('zero locations', np.where(np.isclose(idcg, 0, atol=1e-8)))
+            print('')
+    '''
     idcg_mask = idcg == 0
     ndcg_val[idcg_mask] = np.nan  # if idcg == 0 , set ndcg to 0
 

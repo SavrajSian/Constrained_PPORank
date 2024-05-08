@@ -5,7 +5,7 @@ import scipy
 
 
 class RolloutStorage():
-    def __init__(self, num_steps, num_processes, obs_actor_shape, obs_critic_shape, M):
+    def __init__(self, num_steps, num_processes, obs_actor_shape, obs_critic_shape, M, severities, lagrange_lambda=0.1, lambda_lr=0.01):
         self.num_steps = num_steps  # which is min(num_steps,M), first only consider num_steps>M
         self.num_processes = num_processes
         self.obs_critic_shape = obs_critic_shape
@@ -18,13 +18,16 @@ class RolloutStorage():
         self.action_log_probs = torch.zeros(num_steps*num_processes, 1)
         self.actions = torch.zeros(num_steps*num_processes, 1).long()
         #self.actions = self.actions.long()
-        self.masks = torch.ones(num_steps*num_processes, 1)  # used to indicate wheter comes to a trajectory end
+        self.masks = torch.ones(num_steps*num_processes, 1)  # used to indicate whether comes to a trajectory end
         self.filter_masks = torch.zeros(num_steps*num_processes, num_steps)
         self.end_masks_ind = torch.zeros(num_processes)
         self.dist_entropys = torch.zeros(num_steps*num_processes, 1)
         self.steps = 0
+        self.severities = severities
+        self.lagrange_lambda = lagrange_lambda
+        self.lambda_lr = lambda_lr
 
-    def to(self, device):
+    def to(self, device): #move to gpu
         # self.obs_critic = self.obs_critic.to(device)
         self.obs_actor = self.obs_actor.to(device)
         self.rewards = self.rewards.to(device)
@@ -35,6 +38,7 @@ class RolloutStorage():
         self.masks = self.masks.to(device).to(device)
         self.filter_masks = self.filter_masks.to(device)
         self.dist_entropys = self.dist_entropys.to(device)
+        self.severities = self.severities.to(device)
 
     def sample_episodes(self, agent, input, scores, true_scores, critic_inputs):
         drug_bool1 = torch.isnan(true_scores)
@@ -129,8 +133,8 @@ class RolloutStorage():
     def sample_num_steps(self, agent, input, scores, true_scores, critic_inputs):
         #input : [num_process,M,cell_dim+1]
         # scores: [num_process,M] ts, true_scores:[num_process,M] ts
-        num_process = scores.size()[0]
-        M = scores.size()[1]
+        num_process = scores.size()[0] #16 - training actors to do sample (default=16)
+        M = scores.size()[1] #265 - number of drugs
         paths = []
         time_steps_this_batch = 0
 
@@ -146,27 +150,34 @@ class RolloutStorage():
             M0 = torch.sum(~drug_bool)
             if M0.item() == 0:
                 continue
+            tempM0 = M0.clone()
             filter_masks = torch.zeros_like(scores[0])
             filter_masks = filter_masks.masked_fill_(drug_bool, float('-inf')).clone()
             for step in range(M0):
                 self.filter_masks[step+self.steps].copy_(filter_masks)
-                selected_drug_id, _ = agent.actor_critic.sample_action(scores[cell], filter_masks)  # is a tensor
+                selected_drug_id, _ = agent.actor_critic.sample_action(scores[cell], filter_masks)  # is a tensor. use policy to select action (drug)
+                del _
                 acs_single.append(selected_drug_id)
-                rewards_single.append((2**true_scores[cell][selected_drug_id]-1)/np.log2(step+2))  # tensor
-                log_prob, dist_entropy = agent.actor_critic.get_log_prob(scores[cell], filter_masks, selected_drug_id)
+                rewards_single.append((2**true_scores[cell][selected_drug_id]-1)/np.log2(step+2))  # tensor. reward for action (drug)
+                log_prob, dist_entropy = agent.actor_critic.get_log_prob(scores[cell], filter_masks, selected_drug_id) #prob of action. filter mask adding -inf to score means it cant be selected
                 log_pi_single.append(log_prob)
                 dist_entropy_single.append(dist_entropy)
-                ob_critic = agent.actor_critic.get_fts_vecs(input[cell], filter_masks)
+                ob_critic = agent.actor_critic.get_fts_vecs(input[cell], filter_masks) # build single state vector by concat cell-line, candidate drugs, cos-similarity into single vector
                 if step < M0-1:
                     filter_masks[selected_drug_id] = float('-inf')
 
                 #value_pre = agent.actor_critic.get_value(input[cell], filter_masks)
-                value_pre = agent.actor_critic.get_value_from_actor(critic_inputs[cell].unsqueeze(0))
+                value_pre = agent.actor_critic.get_value_from_actor(critic_inputs[cell].unsqueeze(0)) #does self.critic(input) and returns value
                 value_pred_single.append(value_pre[0])
                 # obs_single.append(ob_critic)
                 obs_actor_single.append(input[cell][0][:-1].unsqueeze(0).clone())
-            self.end_masks_ind[cell] = M0
-            self.masks[M0+self.steps-1] = 0.0
+                #print("M0", M0.cpu().detach().numpy())
+                #M0_int = M0.item()
+                #print('selected_drug_id', selected_drug_id)
+            #print('acs_single', len(acs_single), acs_single)
+            #print('log_prob_single', len(log_pi_single), log_pi_single)
+
+            self.masks[M0.item()+self.steps-1] = 0.0
             self.steps += M0
             path = {"rewards": torch.stack(rewards_single),
                     "log_pi": log_pi_single,  # log_pi_single each element requires grad, so can't be used as np
@@ -178,12 +189,14 @@ class RolloutStorage():
                     }
             time_steps_this_batch += M0
             paths.append(path)
+            #del rewards_single, obs_actor_single, acs_single, log_pi_single, dist_entropy_single, value_pred_single
 
         time_steps_this_batch = self.steps
 
         # concatenate
 
         # self.rewards[:self.steps].copy_(torch.cat(reward))
+        del tempM0
 
         return paths  # this is a batch for training, total steps of M*num_process
 
@@ -218,15 +231,16 @@ class RolloutStorage():
     def sample_concatenate(self, paths):
 
         time_steps_this_batch = self.steps
-        re_n = torch.cat([path["rewards"] for path in paths])
-        log_pis = [path["log_pi"] for path in paths]
-        log_pi_n = torch.stack([y for x in log_pis for y in x])  # a single tensor [35]
-        ac_n = torch.cat([path["actions"] for path in paths])
+        re_n = torch.cat([path["rewards"] for path in paths]) #reward for paths
+        log_pis = [path["log_pi"] for path in paths] # log probability for each action for each path
+        log_pi_n = torch.stack([y for x in log_pis for y in x])  # a single tensor [35] #reshape
+        ac_n = torch.cat([path["actions"] for path in paths]) # actions for each path. appends on top of each other to be nx1
+        #print('ac_n', ac_n.shape)
         # ob_critic_n = torch.cat([path["obs_critic"] for path in paths]).squeeze()  # np ()
-        ob_actor_n = torch.cat([path["obs_actor"] for path in paths]).squeeze()  # np ()
-        d_ns = [path["dist_entropy"] for path in paths]
+        ob_actor_n = torch.cat([path["obs_actor"] for path in paths]).squeeze()  # np () # observation for each path
+        d_ns = [path["dist_entropy"] for path in paths] # dist_entropy for each path
         dist_entropy_n = torch.stack([y for x in d_ns for y in x])
-        v_ns = [path["value_pred"] for path in paths]
+        v_ns = [path["value_pred"] for path in paths] # value prediction for each path
         value_pred_n = torch.stack([y for x in v_ns for y in x]).squeeze()  # (35,1,1)
 
         #assert self.steps == re_n.shape[0]
@@ -238,22 +252,41 @@ class RolloutStorage():
         self.actions[:time_steps_this_batch].copy_(ac_n.view(-1, 1))
         self.dist_entropys[:time_steps_this_batch].copy_(dist_entropy_n.view(-1, 1))
 
-        # self.obs_critic = self.obs_critic[:time_steps_this_batch].clone()
-        self.obs_actor = self.obs_actor[:time_steps_this_batch].clone()
-        self.rewards = self.rewards[:time_steps_this_batch].clone()
-        self.value_preds = self.value_preds[:time_steps_this_batch].clone()
-        self.action_log_probs = self.action_log_probs[:time_steps_this_batch].clone()
-        self.actions = self.actions[:time_steps_this_batch].clone()
-        self.returns = self.returns[:time_steps_this_batch].clone()
-        self.filter_masks = self.filter_masks[:time_steps_this_batch].clone()
-        self.dist_entropys = self.dist_entropys[:time_steps_this_batch].clone()
+        #del re_n, log_pi_n, ac_n, ob_actor_n, dist_entropy_n, value_pred_n, v_ns, d_ns, log_pis
 
-    def compute_returns(self,
-                        use_gae,
-                        gamma,
-                        gae_lambda,
-                        use_proper_time_limits=False):
-        if use_proper_time_limits:
+        #print('act',self.actions.shape)
+        #print('time_steps_this_batch', time_steps_this_batch)
+
+        #keep only the first time_steps_this_batch
+        # self.obs_critic = self.obs_critic[:time_steps_this_batch].clone()
+
+
+        # backup the original tensors
+        original_obs_actor = self.obs_actor
+        original_rewards = self.rewards
+        original_value_preds = self.value_preds
+        original_action_log_probs = self.action_log_probs
+        original_actions = self.actions
+        original_returns = self.returns
+        original_filter_masks = self.filter_masks
+        original_dist_entropys = self.dist_entropys
+
+        # clone and reassign
+        self.obs_actor = original_obs_actor[:time_steps_this_batch].clone()
+        self.rewards = original_rewards[:time_steps_this_batch].clone()
+        self.value_preds = original_value_preds[:time_steps_this_batch].clone()
+        self.action_log_probs = original_action_log_probs[:time_steps_this_batch].clone()
+        self.actions = original_actions[:time_steps_this_batch].clone()
+        self.returns = original_returns[:time_steps_this_batch].clone()
+        self.filter_masks = original_filter_masks[:time_steps_this_batch].clone()
+        self.dist_entropys = original_dist_entropys[:time_steps_this_batch].clone()
+
+        # delete the original tensors
+        del original_obs_actor, original_rewards, original_value_preds, original_action_log_probs
+        del original_actions, original_returns, original_filter_masks, original_dist_entropys
+
+    def compute_returns(self, use_gae, gamma, gae_lambda, use_proper_time_limits=False):
+        if use_proper_time_limits:  # False by default
             if use_gae:
                 gae = 0
                 steps = 0
@@ -315,7 +348,7 @@ class RolloutStorage():
                           num_mini_batch))
         mini_batch_size = batch_size // num_mini_batch
 
-        sampler = BatchSampler(SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=True)
+        sampler = BatchSampler(SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=True) #get minibatch of indices
         for indices in sampler:
             # obs_critic_batch = self.obs_critic.view(-1, self.obs_critic.size()[1])[indices]  # this is after filtering
             # only include cell line without filtering
@@ -341,6 +374,10 @@ class RolloutStorage():
         num_steps = self.num_steps
         num_processes = self.num_processes
 
+        del self.obs_actor, self.rewards, self.value_preds, self.returns
+        del self.action_log_probs, self.actions, self.masks
+        del self.filter_masks, self.end_masks_ind, self.dist_entropys
+
         # self.obs_critic = torch.zeros(num_steps*num_processes, self.obs_critic_shape)  # obs for the value net
         self.obs_actor = torch.zeros(num_steps*num_processes, self.obs_actor_shape)
         self.rewards = torch.zeros(num_steps*num_processes, 1)
@@ -349,7 +386,7 @@ class RolloutStorage():
         self.action_log_probs = torch.zeros(num_steps*num_processes, 1)
         self.actions = torch.zeros(num_steps*num_processes, 1)
         self.actions = self.actions.long()
-        self.masks = torch.ones(num_steps*num_processes, 1)  # used to indicate wheter comes to a trajectory end
+        self.masks = torch.ones(num_steps*num_processes, 1)  # used to indicate whether comes to a trajectory end
         self.filter_masks = torch.zeros(num_steps*num_processes, num_steps)
         self.end_masks_ind = torch.zeros(num_processes)
         self.dist_entropys = torch.zeros(num_steps*num_processes, 1)

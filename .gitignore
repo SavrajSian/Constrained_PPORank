@@ -1,2 +1,16 @@
 /preprocess/
+logs/
+runs/
+GDSC_ALL/Cell_line_RMA_proc_basalExp.txt
+GDSC_ALL/Cell_line_RMA_proc_basalExp.txt.zip
+GDSC_ALL/GDSC_GEX.npz
+GDSC_ALL/TCGA_BRCA.npz
+GDSC_ALL/TCGA_BRCA(1).npz
+GDSC_ALL_alldrugs/Cell_line_RMA_proc_basalExp.txt
+GDSC_ALL_alldrugs/GDSC_GEX.npz
+GDSC_ALL_alldrugs/Cell_line_RMA_proc_basalExp.txt.zip
+GDSC_ALL_alldrugs/TCGA_BRCA.npz
+GDSC_ALL_alldrugs/TCGA_BRCA(1).npz
+temp/gdsc_x_df.csv
+temp2/gdsc_x_df.csv
 

@@ -36,7 +36,7 @@ from sklearn.preprocessing import StandardScaler
 
 def parse_args():
     parser = argparse.ArgumentParser(description="prepare data split for CV with both FULL and KEEPK method")
-    parser.add_argument("--data_dir", default="GDSC_ALL")
+    parser.add_argument("--data_dir", default="preprocess/GDSC_ALL")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--Source", type=str, default="GDSC", help="data source to analysis")
     parser.add_argument("--gene_type", type=str, default="GEX", help="among GEX, WES, CNV, MET")
@@ -47,7 +47,8 @@ def parse_args():
     parser.add_argument("--config", default="./configs/configG_FULL.yaml")
     parser.add_argument("--cl_feature_fname", default="_cellline_pcor_ess_genes.csv",
                         help="cellline features matrix")
-    parser.add_argument("--drug_list_fname", default="_drugMedianGE0.txt", help="essential genes")
+    #parser.add_argument("--drug_list_fname", default="_drugMedianGE0.txt", help="essential genes")
+    parser.add_argument("--drug_list_fname", default="_drugs_with_severities_ids.txt", help="drugs with severity info")
     parser.add_argument("--CV_dir", type=str, default="CV", help="CV data folder")
     parser.add_argument("--nfolds", type=int, default=5, help="num of folds for CV")
     parser.add_argument("--training", default=True, help="whether save the result for CaRRes")
@@ -122,11 +123,11 @@ def Split_Data():
 
     keepk = config['keepk']
 
-    directory = os.path.join(os.getcwd(), args.data_dir)
-    if config['Data_All']:
-        data_all_fn = os.path.join(directory, args.Source+"_" + args.gene_type+".npz")
+    directory = os.path.join(os.getcwd(), args.data_dir) #data_dir = preprocess/GDSC_ALL
+    if config['Data_All']: #True in configG_FULL.yaml (default file in args)
+        data_all_fn = os.path.join(directory, args.Source+"_" + args.gene_type+".npz") # preprocess/GDSC_ALL/GDSC_GEX.npz
         Data_All = np.load(data_all_fn)
-        cl_feature_arr = Data_All['X']  # (962,11737)
+        cl_feature_arr = Data_All['X']  # (962,11737) , gene expression data
         ss_arr = Data_All['Y']  # already normalized -logIC50 (962,265)
         drug_lists = Data_All['drug_ids']  # (265,) # number as 1,2,3..265 string in GDSC, like 211	TL-2-105
         # comes from Cell_line_RMA_proc_basalExp.txt, including all the genes in essential_gens(1856)
@@ -135,19 +136,19 @@ def Split_Data():
         cell_ids = Data_All['cell_ids']  # like ['1240121', '1240122'],Cell line cosmic identifiers
         cell_names = Data_All['cell_names']  # corresponds to IC50 file, like ['BICR22', 'BICR78']
         P = cell_ids
-        Y = pd.DataFrame(ss_arr, index=cell_ids, columns=drug_lists)
-        X = pd.DataFrame(cl_feature_arr, index=cell_ids, columns=gene_symbols)  # 【962，17737】
-
+        Y = pd.DataFrame(ss_arr, index=cell_ids, columns=drug_lists) # rows = cell line ids, columns = drug ids
+        X = pd.DataFrame(cl_feature_arr, index=cell_ids, columns=gene_symbols)  # 【962，17737】rows = cell line ids, columns = gene symbols (names like 'DPM1')
         # ess_genes_list = pp_gene_original.get_gene_list(os.path.join(
         #     os.getcwd(),
         #     args.data_dir, args.gene_list_fn))  # 1856 essential gens
         # ess_genes_common = np.intersect1d(ess_genes_list, list(gene_symbols))  # 1610 common essential genes
-
-        ess_genes_list = pd.read_csv(os.path.join(os.getcwd(), args.data_dir, args.gene_list_fn),
+        print(args.data_dir)
+        print(os.getcwd())
+        ess_genes_list = pd.read_csv(os.path.join(os.getcwd(), args.data_dir, args.gene_list_fn), #697genes.csv is genelistfn
                                      index_col=0, header=0, names=["genes"])
-        ess_genes_common = list(set(X.columns) & set(ess_genes_list['genes']))
+        ess_genes_common = list(set(X.columns) & set(ess_genes_list['genes'])) # genes in both X and ess_genes_list (genelistfn
 
-        X = X[ess_genes_common]
+        X = X[ess_genes_common] # only keep the essential genes
         cell_names_to_ids_map = {cell_names[i]: cell_ids[i] for i in range(len(cell_ids))}
         cell_ids_to_names_map = {cell_ids[i]: cell_names[i] for i in range(len(cell_ids))}
 
@@ -170,6 +171,13 @@ def Split_Data():
         kernel_feature_df.to_csv(os.path.join(directory, "kernel_feature.csv"))
         # we have already calculate the overlap int loading data, no need to doubble check list again
 
+        # get drugs with severity info
+        severity_drugs = pd.read_csv(os.path.join(directory, "{}".format(args.Source)+'_drugs_with_severities_ids.txt'), header=None)
+        #get rid of drugs in Y that arent in severity_drugs
+        print(severity_drugs.columns)
+        drugs_to_keep = list(severity_drugs[0].values.astype(str))
+        Y = Y[drugs_to_keep]
+
     else:
         cl_feature_fname = os.path.join(directory, "{}".format(args.Source)+args.cl_feature_fname)
         cl_features_df = pd.read_csv(cl_feature_fname, index_col=0)  # (1014,1014)
@@ -179,10 +187,10 @@ def Split_Data():
         ss_df.index = ss_df.index.astype(str)  # cell_line names
         # Convert IC50 to sensitivity score, -log(IC50)
         ss_df *= -1
-        drug_list_fname = os.path.join(directory, "{}".format(args.Source)+args.drug_list_fname)
+        drug_list_fname = os.path.join(directory, "{}".format(args.Source)+args.drug_list_fname) #toxic drugs not in drug_list_fname file (gdsc_drugMedianGE0.txt)
         selected_drugs = list(pd.read_csv(drug_list_fname, header=None)[0].values.astype(str))
-        drug_list = list(ss_df.columns)  # 265 drugs, after delete from median 1um, has 223 drugs
-        drug_list = [d for d in drug_list if d in selected_drugs]  # 223 drugs
+        drug_list = list(ss_df.columns)  # 265 drugs, after delete from median file, has 223 drugs
+        drug_list = [d for d in drug_list if d in selected_drugs]  # 223 drugs - filters out toxic drugs since they are not in drug_list_fname. 265 -> 223 (42 toxic drugs)
 
         cl_features_df.index = cl_features_df.index.astype(str)  # (1014,1014)
         cl_list = list(cl_features_df.index.astype(str))
@@ -196,8 +204,8 @@ def Split_Data():
 
         # select only predictable cell lines and drugs
         # S matrix, the cellline_drug_matrix
-        Y = ss_df  # (985,223),
-        X = cl_features_df.loc[P]  # (985,985)
+        Y = ss_df  # (985,223), cell line - drug response matrix
+        X = cl_features_df.loc[P]  # (985,985), cell line - cell line feature matrix
 
     # when it is keepk, use 3fold cv
     if args.data_dir.startswith('GDSC') and analysis == "KEEPK":
@@ -212,12 +220,12 @@ def Split_Data():
         np.random.seed(seed)
         kf = KFold(n_splits=args.nfolds, shuffle=True, random_state=args.seed)
         for i, (train_index, test_index) in enumerate(kf.split(X)):
-            print("spit fold {}".format(i))
+            print("split fold {}".format(i))
             X_train_full = X.iloc[train_index]  # (788,985)
             X_test = X.iloc[test_index]  # (197,985)
             Y_train_full = Y.iloc[train_index]  # (788,223)
             Y_test = Y.iloc[test_index]  # (197,223)
-            X_train_kernel = kernel_feature_df.iloc[train_index, train_index]
+            X_train_kernel = kernel_feature_df.iloc[train_index, train_index] #kernel features based on pearson correlation
             X_test_kernel = kernel_feature_df.iloc[test_index, train_index]
             # '/home/liux3941/RL/RL_GDSC/GDSC_ALL/CV/FULL/Fold0'
             fold_dir = os.path.join(os.getcwd(), args.data_dir, CV_dir, analysis, "Fold{}".format(i))
@@ -229,6 +237,8 @@ def Split_Data():
             Y_test.to_csv(os.path.join(fold_dir, 'YtestDf.csv'))
             X_train_kernel.to_csv(os.path.join(fold_dir, "Xtrain_kernel.csv"))
             X_test_kernel.to_csv(os.path.join(fold_dir, "Xtest_kernel.csv"))
+
+            print(f'saved csvs to {fold_dir}')
 
             # np.savez_compressed(fold_dir+"/FulltrainDf.npz".format(i), Xtrain=X_train_full, Ytrain=Y_train_full)
             # np.savez_compressed(fold_dir+"/FulltestDf.npz".format(i), Xtest=X_test, Ytest=Y_test)
@@ -335,7 +345,7 @@ def Load_from_decompose():
             P_df = cadrres_out_dict['P_df']  # P = tf.matmul(X, W_P) [769,10], X is [769,769]
             Q_df = cadrres_out_dict['Q_df']  # (265,10)
             pred_test_df = cadrres_out_dict['pred_test_df']  # (193,265)
-            WP = cadrres_model_dict['W_P']  # array, [769,10]
+            WP = cadrres_model_dict['W_P']  # array, [769,10] transformation matrix that projects cell-line features onto the latent space.
             WQ = cadrres_model_dict['W_Q']  # Q = tf.matmul(I, W_Q), I is identity(ndrugs),array,[265,10]
             Q = np.matmul(np.identity(Ytrain_df.shape[1]), WQ)  # [265,10]
             b_q = cadrres_model_dict['b_Q']
@@ -362,7 +372,7 @@ def Load_from_decompose():
 
 
 # Response_decompose(ss_df,cl_features_df,iters,lr,f,out_dir)
-def Pretrained_MF_split(iters=20000):
+def Pretrained_MF_split(iters=10000): #changed to 10000 as less drugs with severity info
     args = parse_args()
     config_file = args.config
     gene_list_fn = args.gene_list_fn
@@ -390,6 +400,7 @@ def Pretrained_MF_split(iters=20000):
         out_dir = os.path.join(os.getcwd(), args.data_dir, args.CV_dir, analysis)
         for i in range(nfolds):
             out_dir_cv = os.path.join(out_dir, "Fold{}".format(i))
+            result_fn = get_result_filename('CaDRRes', analysis, data_name, i, args.f)
             # train_data = np.load(out_dir_cv+"/FulltrainDf.npz")
             # Xtrain = train_data['Xtrain']
             # Ytrain = train_data['Ytrain']
@@ -412,7 +423,7 @@ def Pretrained_MF_split(iters=20000):
             if Ypred_mat is not None:
                 print('storing the Ypred mat from CaDRRes')
                 result_fn = get_result_filename('CaDRRes', analysis, data_name, i, args.f)
-                np.savez(result_fn, Y_true=np.array(Ytest_df), Y_pred=Ypred_mat)
+                np.savez(result_fn, Y_true=np.array(Ytest_df), Y_pred=Ypred_mat) #results/GDSC_ALL/FULL/100Dim/CaDRRes/CaDRRes_i.npz
 
     elif analysis == "KEEPK":
         for kr in keepk_ratios:
@@ -433,6 +444,7 @@ def Pretrained_MF_split(iters=20000):
 
 
 if __name__ == "__main__":
-    # Split_Data()
-    Pretrained_MF_split()
+    #Split_Data() #already run
+    #Pretrained_MF_split()
     # Load_from_decompose()
+    print('finished prepare.py')
