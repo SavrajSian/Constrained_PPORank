@@ -13,4 +13,10 @@ GDSC_ALL_alldrugs/TCGA_BRCA.npz
 GDSC_ALL_alldrugs/TCGA_BRCA(1).npz
 temp/gdsc_x_df.csv
 temp2/gdsc_x_df.csv
-
+constrained_plots/
+models_to_test/
+rankings/
+plot_files/
+fast_soft_sort/
+Saved
+results/GDSC_ALL/FULL/100Dim/ppo/

@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ADRCS/drugs_with_severities.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/ADRCS/nontoxic_drug_list.csv">
           <value>
             <Attribute>
@@ -17,7 +24,42 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold0/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold0/YtrainDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold1/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold2/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold3/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/Data for all drugs (full)/Fold4/Xtest_rawDf.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -52,6 +94,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/GDSC_ALL/CV/FULL/Fold1/100Dim/Pmatrix.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/GDSC_ALL/CV/FULL/Fold1/Xtest_rawDf.csv">
           <value>
             <Attribute>
@@ -66,6 +115,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/GDSC_ALL/CV/FULL/Fold1/YtestDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/FULL/Fold1/YtrainDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/GDSC_ALL/CV/FULL/Fold2/Xtest_rawDf.csv">
           <value>
             <Attribute>
@@ -74,6 +137,13 @@
           </value>
         </entry>
         <entry key="/GDSC_ALL/CV/FULL/Fold2/Xtrain_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/FULL/Fold3/100Dim/Pmatrix.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -102,6 +172,41 @@
           </value>
         </entry>
         <entry key="/GDSC_ALL/CV/FULL/Fold4/Xtrain_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/data for drug with severities (full)/Fold0/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/data for drug with severities (full)/Fold1/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/data for drug with severities (full)/Fold2/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/data for drug with severities (full)/Fold3/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL/CV/data for drug with severities (full)/Fold4/Xtest_rawDf.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -157,6 +262,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/GDSC_ALL/drugs_with_severities.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/GDSC_ALL/gdsc_697_genes.csv">
           <value>
             <Attribute>
@@ -165,6 +277,41 @@
           </value>
         </entry>
         <entry key="/GDSC_ALL/severity_scores.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL_alldrugs/CV/FULL/Fold0/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL_alldrugs/CV/FULL/Fold1/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL_alldrugs/CV/FULL/Fold2/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL_alldrugs/CV/FULL/Fold3/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/GDSC_ALL_alldrugs/CV/FULL/Fold4/Xtest_rawDf.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -213,6 +360,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/GDSC_ALL_alldrugs/gdsc_697_genes.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/GDSC_ALL_alldrugs/nontoxic_drug_list.csv">
           <value>
             <Attribute>
@@ -221,6 +375,41 @@
           </value>
         </entry>
         <entry key="$PROJECT_DIR$/../../Drug_list_265.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/Data for all drugs (full)/Fold0/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/Data for all drugs (full)/Fold1/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/Data for all drugs (full)/Fold2/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/Data for all drugs (full)/Fold3/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/Data for all drugs (full)/Fold4/Xtest_rawDf.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -423,6 +612,41 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/data for drug with severities (full)/Fold0/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/data for drug with severities (full)/Fold1/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/data for drug with severities (full)/Fold2/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/data for drug with severities (full)/Fold3/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/preprocess/GDSC_ALL/CV/data for drug with severities (full)/Fold4/Xtest_rawDf.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/preprocess/GDSC_ALL/Drugs/Cell_listTue Oct 31 03_03_12 2017.csv">
           <value>
             <Attribute>
@@ -487,6 +711,20 @@
           </value>
         </entry>
         <entry key="/preprocess/GDSC_ALL/toxic_drug_ids.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/results/GDSC_ALL/FULL/100Dim/ppo/pred_df.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/results/GDSC_ALL/FULL/100Dim/ppo/true_df.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

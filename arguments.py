@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-
+import math
 
 def get_args():
     parser = argparse.ArgumentParser(description='RL ranking algorithm')
@@ -11,7 +11,7 @@ def get_args():
     parser.add_argument(
         '--lr',
         type=float,
-        default=3e-4,
+        default=1.5e-4,
         help='learning rate (default: 3e-4)')
     parser.add_argument(
         '--eps',
@@ -22,7 +22,7 @@ def get_args():
         '--alpha',
         type=float,
         default=0.99,
-        help='RMSprop optimizer apha (default: 0.99)')
+        help='RMSprop optimizer alpha (default: 0.99)')
     parser.add_argument(
         '--cuda_id',
         type=int,
@@ -40,7 +40,7 @@ def get_args():
     parser.add_argument(
         '--entropy_coef',
         type=float,
-        default=0,
+        default=0, # in paper this is 0.001, originally 0. Try 0.01
         help='entropy term coefficient (default: 0.01)')
     parser.add_argument(
         '--value_loss_coef',
@@ -55,32 +55,32 @@ def get_args():
     parser.add_argument(
         '--seed',
         type=int,
-        default=9999,
+        default=1,
         help='random seed (default: 1)')
     parser.add_argument(
         '--cuda_deterministic',
         action='store_true',
-        default=False,
+        default=True,
         help="sets flags for determinism when using CUDA (potentially slow!)")
     parser.add_argument(
         '--num_processes',
         type=int,
         default=16,
-        help='how many training actors to do sample(default: 16)')
+        help='how many training actors to do sample(default: 16) - basically batch size')
     parser.add_argument(
         '--num_steps',
         type=int,
-        default=300,
+        default=300, #try 2048
         help='number of forward steps in a single episode, only used when cut off the episode (default: 300)')
     parser.add_argument(
         '--ppo_epoch',
         type=int,
-        default=4,
+        default=4, #8 in paper, 4 in original. Try 8
         help='number of ppo epochs (default: 4)')
     parser.add_argument(
         '--epochs',
         type=int,
-        default=10,
+        default=700,
         help='number of epochs for training (default:1000)')
     parser.add_argument(
         '--batch_size',
@@ -90,7 +90,7 @@ def get_args():
     parser.add_argument(
         '--num_mini_batch',
         type=int,
-        default=4,
+        default=4,#try 8? was 4 in original. Try 16
         help='number of batches for ppo (default: 8)')
     # parser.add_argument(
     #     '--mini_batch_size',
@@ -105,12 +105,12 @@ def get_args():
     parser.add_argument(
         '--log_interval',
         type=int,
-        default=100,
+        default=10,
         help='log interval, one log per n updates (default: 100)')
     parser.add_argument(
         '--save_interval',
         type=int,
-        default=100,
+        default=10,
         help='save interval, one save per n updates (default: 100)')
     parser.add_argument(
         '--eval_interval',
@@ -120,7 +120,7 @@ def get_args():
     parser.add_argument(
         '--num_env_steps',
         type=int,
-        default=30000000,
+        default=30000000, # original was 30000000
         help='number of environment steps to train (default: 10e6)')
     parser.add_argument(
         '--Data',
@@ -229,12 +229,12 @@ def get_args():
     parser.add_argument(
         '--nlayers_cross',
         type=int,
-        default=1,
+        default=1, #was 1 in original, 2 in paper i think
         help="layers of cross network")
     parser.add_argument(
         '--nlayers_deep',
         type=int,
-        default=2,
+        default=2, #2 in paper, 2 in original
         help="layers of deep network")
     parser.add_argument(
         '--nlayers_value',
@@ -262,7 +262,7 @@ def get_args():
     parser.add_argument(
         '--gamma',
         type=float,
-        default=0.99,
+        default=0.99, #0.95 in paper?, 0.99 in original. Try 0.95
         help="gae discount factor")
     parser.add_argument(
         '--lambda1',
@@ -270,16 +270,16 @@ def get_args():
         default=1e-5,
         help="L1 regulization coeff")
     parser.add_argument(
-        '--deep_hidden_sizes',
-        type=int,
-        nargs="+",
-        default=[256,  128],
-        help="deep part NN hidden units")
-    parser.add_argument(
         '--value_hidden_sizes',
         type=int, nargs="+",
         default=[128, 64],
         help="value NN baseline hidden units")
+    parser.add_argument(
+        '--deep_hidden_sizes',
+        type=int,
+        nargs="+",
+        default=[256,  128], #worth trying [128, 64] & 32 for deep_out_size
+        help="deep part NN hidden units")
     parser.add_argument(
         '--deep_out_size',
         type=int, default=64,
@@ -361,13 +361,88 @@ def get_args():
         default=0.0,
         help='noise mean if using noise data')
     parser.add_argument(
+        '--lr_sched_mult',
+        type=float,
+        default=15,
+        help='multiplier for lr scheduler')
+    parser.add_argument(
         '--constrained',
-        default=True,
+        default=False,
+        type=bool,
         help='whether to use constrained optimization')
+    parser.add_argument(
+        '--lagrange_lambda',
+        default=1,
+        type=float,
+        help='lagrange lambda for constrained optimization')
+    parser.add_argument(
+        '--lambda_lr',
+        default=0.1,
+        type=float,
+        help='lagrange lr for constrained optimization')
     parser.add_argument(
         '--use_mps',
         default=False,
         help='whether to use mps (Mac)')
+    parser.add_argument(
+        '--num_threads',
+        default='13',
+        type=int,
+        help='number of threads for cpu')
+    parser.add_argument(
+        '--reward_scale_factor',
+        default='100',
+        type=int,
+        help='scale factor for reward')
+    parser.add_argument(
+        '--kl_div_check',
+        default=False,
+        type=bool,
+        help='whether to check kl div and compensate')
+    parser.add_argument(
+        '--increase_gae_lambda', #doesnt work - leaving it in just in case
+        default=False,
+        type=str,
+        help='whether to increase gae lambda over time')
+    parser.add_argument(
+        '--rho',
+        default=0.4,
+        type=float,
+        help='rho value for quadratic/augmented penalty')
+    parser.add_argument(
+        '--update_in_val',
+        default=False,
+        type=bool,
+        help='update lambda/rho in validate function')
+    parser.add_argument(
+        '--lagrange_loss',
+        default=False,
+        type=bool,
+        help='use lagrange loss in loss function')
+    parser.add_argument(
+        '--quadratic_loss',
+        default=False,
+        type=bool,
+        help='use quadratic loss in loss function')
+    parser.add_argument(
+        '--augmented_lagrange_loss',
+        default=False,
+        type=bool,
+        help='use augmented lagrange loss in loss function')
+    parser.add_argument(
+        '--target_pen',
+        default=36,
+        type=float,
+        help='target penalty value for constrained')
+    parser.add_argument(
+        '--do_cost_advantages',
+        default=False,
+        type=bool,
+        help='target penalty value for constrained')
+
+
+
+
 
     args = parser.parse_args()
 
@@ -377,6 +452,10 @@ def get_args():
         args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     args.shared_params = False
+
+    if args.distributed:
+        args.lr = args.lr * math.sqrt(args.nproc_per_node)
+        print('changed lr to', args.lr)
 
     #args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.cuda = torch.cuda.is_available()

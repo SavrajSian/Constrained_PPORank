@@ -176,8 +176,8 @@ def Split_Data():
         #get rid of drugs in Y that arent in severity_drugs
         print(severity_drugs.columns)
         drugs_to_keep = list(severity_drugs[0].values.astype(str))
-        Y = Y[drugs_to_keep]
-
+        Y = Y[drugs_to_keep] # Y is the cell line drug response 'matrix'
+        # X has nothing to do with drugs - thats cell line gene expression data.
     else:
         cl_feature_fname = os.path.join(directory, "{}".format(args.Source)+args.cl_feature_fname)
         cl_features_df = pd.read_csv(cl_feature_fname, index_col=0)  # (1014,1014)

@@ -329,11 +329,12 @@ def compare_models_by_metric(model_1, model_2, model_hist_1, model_hist_2, metri
     plt.show()
 
 
-def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
+def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr, mult):
     """Decreases the learning rate linearly"""
-    lr = initial_lr - (initial_lr * (epoch / float(total_num_epochs)))
+    lr = initial_lr - (initial_lr * (epoch*mult / float(total_num_epochs)))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
+    print('new learning rate is: ', lr)
 
 
 def precision(y, f, k):

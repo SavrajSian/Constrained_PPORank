@@ -11,7 +11,8 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Tenso
 import logging
 from torch.nn.parameter import Parameter
 from models.DNN_models import *
-
+import torchsort
+from fast_soft_sort.pytorch_ops import soft_rank
 
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
@@ -40,7 +41,7 @@ class Deep_Cross_Policy(nn.Module):
         self.nlayers_deep = nlayers_deep
         self.device = device
 
-        self.drug_embedding = nn.Embedding(M, drug_dim, max_norm=1).float()
+        self.drug_embedding = nn.Embedding(M, drug_dim, max_norm=1).double()
 
         # self.drug_embedding.weight.data.copy_(drug_embedding)
         if drug_embedding is not None:
@@ -52,7 +53,7 @@ class Deep_Cross_Policy(nn.Module):
 
         input_sizes = [self.N, self.M, self.gene_dim]
 
-        self.cell_layer = CellNet(input_sizes, self.cell_dim, WP_pretrained=cell_WPmat).float()
+        self.cell_layer = CellNet(input_sizes, self.cell_dim, WP_pretrained=cell_WPmat).double()
 
         #self.cell_layer.weight.data.copy_(torch.transpose(WPmat, 0, 1))
         if cell_WPmat is not None:
@@ -61,10 +62,10 @@ class Deep_Cross_Policy(nn.Module):
 
         self.x0_dim = drug_dim+cell_dim+1
 
-        self.cross_classifier = CrossNet(self.x0_dim, self.nlayers_cross, drug_mean=drug_mean).float()
+        self.cross_classifier = CrossNet(self.x0_dim, self.nlayers_cross, drug_mean=drug_mean).double()
         #self.deep_classifier = build_mlp(self.total_dim, deep_out_size, deep_layers, hidden_sizes).float()
         self.deep_classifier = DeepNet(self.x0_dim, deep_out_size, nlayers_deep,
-                                       hidden_sizes, dropout_rates=dropout_rates).float()
+                                       hidden_sizes, dropout_rates=dropout_rates).double()
 
         #self.cross_classifier = build_cross(self.total_dim,cross_layers)
         # self.classifierC0 = CrossLayer(self.total_dim).float()  # if we only consider the level 1 cross, to save
@@ -72,11 +73,11 @@ class Deep_Cross_Policy(nn.Module):
         #self.classifierC1 = CrossLayer(self.total_dim).float()
 
         in_final_dim = deep_out_size + self.x0_dim + 1  # 1 is for cosine similarity
-        self.activation = nn.ReLU().float()
-        self.BN = nn.BatchNorm1d(M).float()
+        self.activation = nn.ReLU().double()
+        self.BN = nn.BatchNorm1d(M).double()
         #self.drop_out = nn.Dropout(p=0.2)
         # input 3-D, so output_size=1 in the 3rd dim
-        self.classifierF = nn.Linear(in_final_dim, 1, bias=True).float()
+        self.classifierF = nn.Linear(in_final_dim, 1, bias=True).double()
         nn.init.constant_(self.classifierF.bias, 10.0)
         if overall_mean:
             self.classifierF.bias.data.copy_(overall_mean)
@@ -130,7 +131,7 @@ class ValueNet(nn.Module):
         self.output_size = output_size
         self.n_layers = n_layers
         self.hidden_sizes = hidden_sizes
-        self.mlp = build_mlp(input_size, output_size, n_layers, hidden_sizes).float()
+        self.mlp = build_mlp(input_size, output_size, n_layers, hidden_sizes).double()
 
     def forward(self, input):
         """
@@ -138,7 +139,7 @@ class ValueNet(nn.Module):
         the remaining all documents:N*1*P
         """
 
-        values = self.mlp(input.float())
+        values = self.mlp(input.double())
         # return self.softmax(values)  # [0,1]
         return torch.sigmoid(values)
 
@@ -146,7 +147,7 @@ class ValueNet(nn.Module):
 class ConvValueNet(nn.Module):
     def __init__(self, input_c, output_c, kernel_size):
         super(ConvValueNet, self).__init__()
-        self.conv1d_layer = nn.Conv1d(input_c, output_c, kernel_size).float()
+        self.conv1d_layer = nn.Conv1d(input_c, output_c, kernel_size).double()
         self.pooling = nn.AvgPool1d(kernel_size)
 
     def forward(self, input):
@@ -189,6 +190,7 @@ class PPO_Policy(nn.Module):
         # the output size should be 1,which is the state
         # self.critic_old = ValueNet(self.critic_size, 1, value_n_layers, value_hidden_sizes)
         self.critic = ConvValueNet(M, 1, cell_dim) #critic is a convolutional value network
+        self.cost_critic = ConvValueNet(M, 1, cell_dim)
 
         self.parameters = list(self.actor.parameters())+list(self.critic.parameters())
 
@@ -237,7 +239,8 @@ class PPO_Policy(nn.Module):
 
     def get_value_from_actor(self, input):
         critic_value = self.critic(input)
-        return critic_value
+        critic_cost = self.cost_critic(input)
+        return critic_value, critic_cost
 
     def sample_action(self, scores, filter_masks):
         dimension = len(scores.shape)-1
@@ -253,8 +256,10 @@ class PPO_Policy(nn.Module):
 
     def get_log_prob(self, scores, filter_masks, selected_drug_ids):
         self.dist = torch.distributions.Categorical(logits=scores+filter_masks)
-        sel_drug_ids = selected_drug_ids.squeeze(-1) # this damn squeeze is needed to log_prob isnt shape (854,854)
-        log_prob = self.dist.log_prob(sel_drug_ids)  # .view(1, -1))
+        #sel_drug_ids = selected_drug_ids.squeeze(-1) # this damn squeeze is needed to log_prob isnt shape (854,854)
+        #log_prob = self.dist.log_prob(sel_drug_ids)  # .view(1, -1))
+        log_prob = self.dist.log_prob(selected_drug_ids.view(1, -1)) # .view(1, -1))
+
         probs = self.dist.probs
         dist_entropy = -(scores*probs).sum(-1)
         '''
@@ -279,24 +284,35 @@ class PPO_Policy(nn.Module):
 
         return scores, action, action_log_prob, filter_masks
 
-    def evaluate_actions(self,  obs_actor, filter_masks, actions):
+    def evaluate_actions(self,  obs_actor, filter_masks, actions, pens):
         # here the values should requires grad true
+
+
         device = actions.device
         B = obs_actor.size()[0]
         M = filter_masks.size()[1]
+        actions_with_grad = None # actions.clone().detach().float().requires_grad_(True)
+        pens_with_grad = None # pens.clone().detach().float().requires_grad_(True)
         #obs_actor_np = obs_actor.cpu().data.numpy()
         drug_inds = torch.from_numpy(np.arange(M).reshape(1, M).repeat(B, axis=0).reshape(B, M, 1)).to(device)
-        cell_fts = torch.repeat_interleave(obs_actor.view(B, 1, -1), repeats=M, dim=1).float()
+        cell_fts = torch.repeat_interleave(obs_actor.view(B, 1, -1), repeats=M, dim=1).double()
         # np.repeat(obs_actor_np[:,np.newaxis,:],M,axis=1)
-        input = torch.cat((cell_fts, drug_inds.float()), axis=2)
-        #print('input', input.shape)
-        #print()
-        scores, critic_input = self.actor(input)
-        scores = scores.squeeze()
-        values = self.critic(critic_input) #critic_input is size 123x38x266
-        action_log_prob, dist_entropy = self.get_log_prob(scores, filter_masks, actions)
+        input = torch.cat((cell_fts, drug_inds.double()), axis=2)
+        #input = input.requires_grad_(True)
 
-        return values, action_log_prob, dist_entropy
+        scores, critic_input = self.actor(input) #requires_grad=True
+        scores = scores.squeeze()
+        scores = scores.cpu()
+        sorted = torchsort.soft_rank(scores, regularization_strength=0.01)
+        scores = scores.to(device)
+        sorted = sorted.to(device)
+        #sorted = soft_rank(scores, regularization_strength=0.01)
+        values = self.critic(critic_input) #critic_input is size 123x38x266
+        cost_values = self.cost_critic(critic_input)
+        action_log_prob, dist_entropy = self.get_log_prob(scores, filter_masks, actions)
+        action_log_prob_extra_grad, _ = None,None # self.get_log_prob(scores, filter_masks, actions_with_grad)
+
+        return values, action_log_prob, dist_entropy, cost_values, actions_with_grad, action_log_prob_extra_grad, sorted
 
 
 class PPO_Shared_Policy(nn.Module):
@@ -313,7 +329,7 @@ class PPO_Shared_Policy(nn.Module):
             N, M, gene_dim, drug_dim, drug_pretrained_weight, cell_dim, WPmat,
             cross_layers, deep_layers, hidden_sizes, deep_out_size,
             train_cell=train_cell, train_drug=train_drug)
-        self.params = list(self.actor.parameters())
+        self.parameters = list(self.actor.parameters())
         #self.critic_size = self.actor.cell_dim + M*(self.actor.drug_dim+1)
         # input consits of cell features and drug features and cos similarity
         # can be done through actor and then using masks then concatenate
@@ -386,9 +402,9 @@ class PPO_Shared_Policy(nn.Module):
         M = filter_masks.size()[1]
         #obs_actor_np = obs_actor.cpu().data.numpy()
         drug_inds = torch.from_numpy(np.arange(M).reshape(1, M).repeat(B, axis=0).reshape(B, M, 1))
-        cell_fts = torch.repeat_interleave(obs_actor.view(B, 1, -1), repeats=M, dim=1).float()
+        cell_fts = torch.repeat_interleave(obs_actor.view(B, 1, -1), repeats=M, dim=1).double()
         # np.repeat(obs_actor_np[:,np.newaxis,:],M,axis=1)
-        input = torch.cat((cell_fts, drug_inds.float()), axis=2)
+        input = torch.cat((cell_fts, drug_inds.double()), axis=2)
 
         scores = self.actor(input).squeeze()
         values = self.get_value(input, true_scores, filter_masks, cur_ranks)

@@ -135,6 +135,8 @@ L = f(θ) + λg(θ)
 where f is the objective function, g is the constraint function, and λ is the Lagrange multiplier. (θ is the parameter vector)
 f is the neural network for DRL, g is the toxicity function.
 
+can say that g(θ) <= 0 is the constraint. 
+
 g is formulated as such:
 1. get average probability of each drug
 2. rank in ordered list of probability of being chosen (highest prob is in theory most efficient)
