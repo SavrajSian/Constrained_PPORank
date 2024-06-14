@@ -439,6 +439,12 @@ def get_args():
         default=False,
         type=bool,
         help='target penalty value for constrained')
+    parser.add_argument(
+        '--sequential_data',
+        default=False,
+        type=bool,
+        help='sequential data for RL simulation')
+
 
 
 

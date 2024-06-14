@@ -299,13 +299,13 @@ class PPO_Policy(nn.Module):
         # np.repeat(obs_actor_np[:,np.newaxis,:],M,axis=1)
         input = torch.cat((cell_fts, drug_inds.double()), axis=2)
         #input = input.requires_grad_(True)
-
         scores, critic_input = self.actor(input) #requires_grad=True
         scores = scores.squeeze()
         scores = scores.cpu()
         sorted = torchsort.soft_rank(scores, regularization_strength=0.01)
         scores = scores.to(device)
         sorted = sorted.to(device)
+
         #sorted = soft_rank(scores, regularization_strength=0.01)
         values = self.critic(critic_input) #critic_input is size 123x38x266
         cost_values = self.cost_critic(critic_input)

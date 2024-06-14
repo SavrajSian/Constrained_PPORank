@@ -15,7 +15,7 @@ from torch.distributed import ReduceOp
 import torchsort
 
 
-def validate(agent, test_loader, args, device, drug_idx_to_original_map=None, rollouts=None, update_lambda=False, train=False):
+def validate(agent, test_loader, args, device, drug_idx_to_original_map=None, rollouts=None, update_lambda=False, train=False, sequential_limit=48):
     # losses=AverageMeter()
     # agent.actor_critic.eval()
     ndcg_all = []
@@ -26,6 +26,9 @@ def validate(agent, test_loader, args, device, drug_idx_to_original_map=None, ro
     dist = args.distributed
     with torch.no_grad():
         for i, batch in enumerate(test_loader):
+            if args.sequential_data:
+                if i > sequential_limit:
+                    break
             input, true_scores = batch
             input_var = input.clone().detach().requires_grad_(False).to(device)  # added .float()
             if args.algo == 'ppo':

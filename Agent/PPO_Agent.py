@@ -106,7 +106,7 @@ class PPO():
                 data_generator = rollouts.feed_forward_generator(  # gives all the data for the batch needed
                     advantages, num_mini_batch=self.num_mini_batch)
             for sample in data_generator: # 4 iterations
-                # old_action_log_probs_batch requr_grad false
+                # old_action_log_probs_batch require_grad false
                 obs_actor_batch, filter_masks_batch, actions_batch, value_preds_batch, \
                     return_batch, masks_batch, old_action_log_probs_batch, adv_targ, cadv_targ, pens_batch, cost_returns_batch = sample
                 # print('actions_batch', actions_batch.cpu().detach().numpy().shape)
@@ -126,7 +126,6 @@ class PPO():
                 ratio = torch.exp(action_log_probs -
                                   old_action_log_probs_batch)  # [64,1] #ratio of new to old policy
                 surr1 = ratio * adv_targ  # [64,1] . first term in LtCLIP
-
                 cur_lrmult = 1 - ppo_update_ind / tot_ppo_update  # linearly decaying learning rate
                 clip_param = self.clip_param * cur_lrmult  # epsilon in LtCLIP
 
@@ -297,9 +296,9 @@ class PPO():
 
 
                     rho = self.rho  # specified in args
-                    PPO_quadratic_loss = PPO_loss + 1/rho * torch.pow(pen_violation, 2)
+                    quad_max = torch.max(pen_violation, torch.tensor(0.0, dtype=torch.float32, device=device))
+                    PPO_quadratic_loss = PPO_loss + 1/rho * torch.pow(quad_max, 2)
                     PPO_augmented_lagrange_loss = PPO_loss + lagrange_multiplier * pen_violation + 1/rho * torch.pow(pen_violation, 2)
-
                     if args.lagrange_loss:
                         PPO_loss_fn = PPO_lagrange_loss
                     elif args.quadratic_loss:
@@ -341,6 +340,17 @@ class PPO():
                     self.lagrange_optimizer.step()
                     print('new raw lambda:', self.lagrange_lambda.item())
                     #print('new celu lambda:', nn.functional.celu(self.lagrange_lambda, alpha=0.01).item())
+                    if args.augmented_lagrange_loss:
+                        if avg_update_constraint < 0:
+                            self.rho = self.rho * 1.00005
+                            print('Updated bigger rho:', self.rho)
+                        elif avg_update_constraint > 0.03:
+                            self.rho = self.rho * 0.99995
+                            print('Updated smaller rho:', self.rho)
+                        else:
+                            print('rho not updated, rho:', self.rho)
+
+
                     print('average penalty violation:', avg_update_constraint.item())
 
                 self.optimizer.step()  # update the weights after loss pen backprop and step otherwise params will updated before and cause inplace error

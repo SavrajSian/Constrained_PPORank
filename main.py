@@ -152,6 +152,7 @@ def main(Debug=False):
                               batch_size=args.num_processes, drop_last=True)
     test_loader = DataLoader(test_dataset, batch_size=args.num_processes, drop_last=True)
 
+
     best_ndcg = 0
 
     if args.algo == 'ppo':
@@ -257,6 +258,7 @@ def main(Debug=False):
         print('constrained is {} - using {} loss. lagrange lambda is {}, lagrange lambda lr is {}. Update in val is {}. rho is {}'.format(do_constrained, losstype ,lagrange_lambda, lambda_lr, args.update_in_val, args.rho))
 
 
+
         train_ndcgs_all = np.array([], dtype=np.float32)
         test_ndcgs_all = np.array([], dtype=np.float32)
         train_rewards_all = np.array([], dtype=np.float32)
@@ -269,7 +271,14 @@ def main(Debug=False):
 
         initial_gae_lambda = args.gae_lambda
 
+        sequential_limit = 24
+        if args.sequential_data:
+            print('doing sequential data')
         for epoch in range(epochs):
+            if args.sequential_data:
+                if epoch % 100 == 0 and epoch != 0:
+                    sequential_limit = sequential_limit + 5
+                    print('adding to sequential limit, new limit is:', sequential_limit)
             # train_loader = DataLoader(train_dataset, sampler=tr_sampler, num_workers=4, pin_memory=True,
             #                           batch_size=args.num_processes, drop_last=True)
             if args.distributed:
@@ -297,6 +306,10 @@ def main(Debug=False):
             loop = tqdm(enumerate(train_loader), total=len(train_loader), colour='#3C8F3D', disable=tqdm_disable)
             #print('train loader length is ', len(train_loader))
             for i, batch in loop: # train_loader length = 48
+                if args.sequential_data:
+                    if i >= sequential_limit:
+                        print('continuing')
+                        continue
                 start = time.time()
                 input, true_scores = batch  # input[B,M,P+1],1 is drug index
                 input_var = input.clone().detach().to(device)  # input.detach().clone().requires_grad_(False).to(device). 16x38x664
@@ -315,7 +328,6 @@ def main(Debug=False):
                     #paths contains rewards, log_probs of policy, dist_entropy, value_preds, obs_actor for all the time steps
                     #for p in paths:
                         #print('actions', p['actions'])
-
                     # TODO: multi process for sample collection
                     #############################################################################################################################
                     #rollouts.sample_episodes(agent, input_var, scores, true_scores, critic_inputs)
@@ -356,7 +368,7 @@ def main(Debug=False):
                     agent, train_loader, args, device, drug_idx_to_original_map, rollouts, update_lambda=do_constrained) #validate the model on the training data, returns ndcg, rewards, best rewards, and predictions. same process as what was just done basically
             else:
                 ndcg_train, train_rewards, best_train_rewards, pred_train = validate(
-                    agent, train_loader, args, device, drug_idx_to_original_map, rollouts=rollouts, update_lambda=False, train=True)
+                    agent, train_loader, args, device, drug_idx_to_original_map, rollouts=rollouts, update_lambda=False, train=True, sequential_limit=sequential_limit)
             epoch_loss = sum(ppo_epoch_loss)/len(ppo_epoch_loss) #average loss over the epoch
             ppo_epoch_loss.append(epoch_loss)
 
