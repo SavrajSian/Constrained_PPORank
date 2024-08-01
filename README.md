@@ -1,4 +1,4 @@
-The [report/thesis](FYP_Report.pdf) is included in this repository. It contains an introduction, technical background, design and analysis of the model, testing and evaluation, and conclusions.
+The [report](FYP_Report.pdf) for my Master's thesis is included in this repository. It contains an introduction, technical background, design and analysis of the model, testing and evaluation, and conclusions.
 
 
 ## Unconstrained PPORank Readme:
