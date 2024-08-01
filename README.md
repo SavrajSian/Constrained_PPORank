@@ -1,4 +1,7 @@
-## Original PPORank Readme:
+The [report/thesis](FYP_Report.pdf) is included in this repository. It contains an introduction, technical background, design and analysis of the model, testing and evaluation, and conclusions.
+
+
+## Unconstrained PPORank Readme:
 
 ## PPORank usage
 The implementation of PPORank is in "main.py":
