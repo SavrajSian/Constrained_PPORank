@@ -57,12 +57,12 @@ The preprocessed data containing just the drugs with severity scores is in the G
 
 To run, similar to PPORank, but I've added more flags, specifically related to constraints
 
-Need --constrained=True  --target_pen=X
+Need ``` --constrained=True  --target_pen=X ```
 
-For lagrange loss: --lagrange_loss=True --lagrange_lambda=X --lambda_lr=X
+For lagrange loss: ``` --lagrange_loss=True --lagrange_lambda=X --lambda_lr=X ```
 
-For quadratic loss: --quadratic_loss=True --rho=X
+For quadratic loss:``` --quadratic_loss=True --rho=X ```
 
-For augmented lagrange loss: --augmented_lagrange_loss=True --lagrange_lambda=X --lambda_lr=X --rho=X
+For augmented lagrange loss: ``` --augmented_lagrange_loss=True --lagrange_lambda=X --lambda_lr=X --rho=X ```
 
-Example: python main.py --epochs=700 --lr=1.5e-4 --lr_sched_mult=15 --constrained=True --lagrange_loss=True --lagrange_lambda=0 --lambda_lr=5e-5 --target_pen=3.6
+Example: ``` python main.py --epochs=700 --lr=1.5e-4 --lr_sched_mult=15 --constrained=True --lagrange_loss=True --lagrange_lambda=0 --lambda_lr=5e-5 --target_pen=3.6 ```
