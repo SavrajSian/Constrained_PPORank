@@ -1,5 +1,7 @@
 The [report](FYP_Report.pdf) for my Master's thesis is included in this repository. It contains an introduction, technical background, design and analysis of the model, testing and evaluation, and conclusions.
 
+The thesis is titled 'Deep Reinforcement Learning for Personalised Treatment Recommendations'.
+
 
 ## Unconstrained PPORank Readme:
 
